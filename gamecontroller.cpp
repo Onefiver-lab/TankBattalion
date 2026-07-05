@@ -1,33 +1,87 @@
 #include "gamecontroller.h"
 #include <QDebug>
 
-GameController::GameController(QObject *parent) : QObject(parent) {
+GameController::GameController(QObject *parent) : QObject(parent), m_playerTank(nullptr) {
     m_gameTimer = new QTimer(this);
     connect(m_gameTimer, &QTimer::timeout, this, &GameController::gameLoop);
+    m_playerTank = new Tank(380, 500, true, this);
 }
 
 GameController::~GameController() {
     qDeleteAll(m_bulletList);
+    qDeleteAll(m_enemyList);
 }
 
 void GameController::startGame() {
     m_elapsedTimer.start();
+
+    qDeleteAll(m_enemyList);
+    m_enemyList.clear();
+    spawnEnemies();
+
     m_gameTimer->start(16);
-    qDebug() << "游戏开始...";
+    qDebug() << "游戏全面开始！";
 }
 
 void GameController::pauseGame() {
     m_gameTimer->stop();
 }
 
+void GameController::spawnEnemies() {
+    m_enemyList.append(new Tank(100, 50, false, this));
+    m_enemyList.append(new Tank(400, 50, false, this));
+    m_enemyList.append(new Tank(700, 50, false, this));
+
+    emit enemiesChanged();
+}
+
+void GameController::handlePlayerMove(int direction, bool moving) {
+    if (m_playerTank && m_playerTank->isActive()) {
+        m_playerTank->setDirection(direction);
+        m_playerTank->setMoving(moving);
+    }
+}
+
+void GameController::handlePlayerFire() {
+    if (m_playerTank && m_playerTank->isActive()) {
+        Bullet *b = m_playerTank->fire();
+        if (b) {
+            m_bulletList.append(b);
+            emit bulletsChanged();
+        }
+    }
+}
+
 void GameController::spawnPlayerBullet(double x, double y, int direction) {
     Bullet *newBullet = new Bullet(x, y, direction, true, this);
     m_bulletList.append(newBullet);
+    emit bulletsChanged();
 }
 
 void GameController::gameLoop() {
     double deltaTime = m_elapsedTimer.restart() / 1000.0;
     if (deltaTime > 0.05) deltaTime = 0.05;
+
+    if (m_playerTank && m_playerTank->isActive()) {
+        m_playerTank->update(deltaTime);
+    }
+
+    bool enemyFired = false;
+    for (Tank *enemy : m_enemyList) {
+        if (enemy->isActive()) {
+            enemy->update(deltaTime);
+            if (rand() % 100 < 2) {
+                Bullet *b = enemy->fire();
+                if (b) {
+                    m_bulletList.append(b);
+                    enemyFired = true;
+                }
+            }
+        }
+    }
+    if (enemyFired) {
+        emit bulletsChanged();
+    }
 
     for (Bullet *bullet : m_bulletList) {
         bullet->update(deltaTime);
@@ -35,18 +89,32 @@ void GameController::gameLoop() {
 
     checkCollisions();
     cleanUpDestroyedObjects();
+
+    emit enemiesChanged();
+    emit bulletsChanged();
 }
 
 void GameController::checkCollisions() {
-    for (int i = 0; i < m_bulletList.size(); ++i) {
-        for (int j = i + 1; j < m_bulletList.size(); ++j) {
-            Bullet *b1 = m_bulletList[i];
-            Bullet *b2 = m_bulletList[j];
+    for (Bullet *bullet : m_bulletList) {
+        if (!bullet->isActive()) continue;
 
-            if (b1->isActive() && b2->isActive() && b1->isFromPlayer() != b2->isFromPlayer()) {
-                if (b1->boundingBox().intersects(b2->boundingBox())) {
-                    b1->setActive(false);
-                    b2->setActive(false);
+        if (bullet->isFromPlayer()) {
+            for (Tank *enemy : m_enemyList) {
+                if (enemy->isActive() && bullet->boundingBox().intersects(enemy->boundingBox())) {
+                    bullet->setActive(false);
+                    enemy->takeDamage(1);
+                    break;
+                }
+            }
+        } else {
+            if (m_playerTank && m_playerTank->isActive()) {
+                if (bullet->boundingBox().intersects(m_playerTank->boundingBox())) {
+                    bullet->setActive(false);
+                    m_playerTank->takeDamage(1);
+                    if (!m_playerTank->isActive()) {
+                        emit gameOver();
+                        m_gameTimer->stop();
+                    }
                 }
             }
         }
@@ -54,21 +122,41 @@ void GameController::checkCollisions() {
 }
 
 void GameController::cleanUpDestroyedObjects() {
-    auto it = m_bulletList.begin();
-    while (it != m_bulletList.end()) {
-        if (!(*it)->isActive()) {
-            (*it)->deleteLater();
-            it = m_bulletList.erase(it);
+    bool bChanged = false;
+    auto bit = m_bulletList.begin();
+    while (bit != m_bulletList.end()) {
+        if (!(*bit)->isActive()) {
+            (*bit)->deleteLater();
+            bit = m_bulletList.erase(bit);
+            bChanged = true;
         } else {
-            ++it;
+            ++bit;
         }
     }
+    if (bChanged) emit bulletsChanged();
+
+    bool eChanged = false;
+    auto tit = m_enemyList.begin();
+    while (tit != m_enemyList.end()) {
+        if (!(*tit)->isActive()) {
+            (*tit)->deleteLater();
+            tit = m_enemyList.erase(tit);
+            eChanged = true;
+        } else {
+            ++tit;
+        }
+    }
+    if (eChanged) emit enemiesChanged();
 }
 
 QList<QObject*> GameController::bullets() const {
     QList<QObject*> list;
-    for (auto b : m_bulletList) {
-        list.append(b);
-    }
+    for (auto b : m_bulletList) list.append(b);
+    return list;
+}
+
+QList<QObject*> GameController::enemies() const {
+    QList<QObject*> list;
+    for (auto e : m_enemyList) list.append(e);
     return list;
 }
