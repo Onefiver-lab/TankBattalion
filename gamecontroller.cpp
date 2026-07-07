@@ -4,6 +4,8 @@
 GameController::GameController(QObject *parent) : QObject(parent), m_playerTank(nullptr) {
     m_gameTimer = new QTimer(this);
     connect(m_gameTimer, &QTimer::timeout, this, &GameController::gameLoop);
+
+    m_mapManager = new MapManager(this); // 实例化地图
     m_playerTank = new Tank(380, 500, true, this);
 }
 
@@ -15,11 +17,12 @@ GameController::~GameController() {
 void GameController::startGame() {
     m_elapsedTimer.start();
 
+    m_mapManager->loadDefaultMap();
     qDeleteAll(m_enemyList);
     m_enemyList.clear();
     spawnEnemies();
 
-    m_gameTimer->start(16);
+    m_gameTimer->start(16); // ~60 FPS
     qDebug() << "游戏全面开始！";
 }
 
@@ -31,7 +34,6 @@ void GameController::spawnEnemies() {
     m_enemyList.append(new Tank(100, 50, false, this));
     m_enemyList.append(new Tank(400, 50, false, this));
     m_enemyList.append(new Tank(700, 50, false, this));
-
     emit enemiesChanged();
 }
 
@@ -63,13 +65,24 @@ void GameController::gameLoop() {
     if (deltaTime > 0.05) deltaTime = 0.05;
 
     if (m_playerTank && m_playerTank->isActive()) {
+        QRectF oldBox = m_playerTank->boundingBox();
         m_playerTank->update(deltaTime);
+        if (m_mapManager->checkCollision(m_playerTank->boundingBox())) {
+            m_playerTank->setX(oldBox.x());
+            m_playerTank->setY(oldBox.y());
+        }
     }
 
     bool enemyFired = false;
     for (Tank *enemy : m_enemyList) {
         if (enemy->isActive()) {
+            QRectF oldEnemyBox = enemy->boundingBox();
             enemy->update(deltaTime);
+            if (m_mapManager->checkCollision(enemy->boundingBox())) {
+                enemy->setX(oldEnemyBox.x());
+                enemy->setY(oldEnemyBox.y());
+            }
+
             if (rand() % 100 < 2) {
                 Bullet *b = enemy->fire();
                 if (b) {
@@ -88,6 +101,7 @@ void GameController::gameLoop() {
     }
 
     checkCollisions();
+
     cleanUpDestroyedObjects();
 
     emit enemiesChanged();
@@ -97,6 +111,11 @@ void GameController::gameLoop() {
 void GameController::checkCollisions() {
     for (Bullet *bullet : m_bulletList) {
         if (!bullet->isActive()) continue;
+
+        if (m_mapManager->handleBulletHit(bullet->boundingBox())) {
+            bullet->setActive(false);
+            continue;
+        }
 
         if (bullet->isFromPlayer()) {
             for (Tank *enemy : m_enemyList) {

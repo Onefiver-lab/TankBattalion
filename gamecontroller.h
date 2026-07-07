@@ -1,5 +1,3 @@
-
-
 #pragma once
 #include <QObject>
 #include <QTimer>
@@ -7,12 +5,14 @@
 #include <QList>
 #include "bullet.h"
 #include "tank.h"
+#include "mapmanager.h"
 
 class GameController : public QObject {
     Q_OBJECT
     Q_PROPERTY(QList<QObject*> bullets READ bullets NOTIFY bulletsChanged)
     Q_PROPERTY(QList<QObject*> enemies READ enemies NOTIFY enemiesChanged)
     Q_PROPERTY(Tank* player READ player CONSTANT)
+    Q_PROPERTY(MapManager* mapManager READ mapManager CONSTANT)
 
 public:
     explicit GameController(QObject *parent = nullptr);
@@ -27,6 +27,7 @@ public:
     QList<QObject*> bullets() const;
     QList<QObject*> enemies() const;
     Tank* player() const { return m_playerTank; }
+    MapManager* mapManager() const { return m_mapManager; }
 
 signals:
     void gameOver();
@@ -47,4 +48,5 @@ private:
     QList<Bullet*> m_bulletList;
     QList<Tank*> m_enemyList;
     Tank *m_playerTank;
+    MapManager *m_mapManager;
 };

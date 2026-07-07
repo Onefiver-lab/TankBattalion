@@ -20,6 +20,7 @@ qt_add_qml_module(appTankBattalion
     SOURCES bullet.h bullet.cpp
     SOURCES gamecontroller.h gamecontroller.cpp
     SOURCES tank.h tank.cpp
+    SOURCES mapmanager.h mapmanager.cpp
 )
 target_compile_features(appTankBattalion PRIVATE cxx_std_23)
 target_link_libraries(appTankBattalion

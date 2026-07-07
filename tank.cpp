@@ -32,7 +32,6 @@ void Tank::takeDamage(int amount) {
 Bullet* Tank::fire() {
     if (!m_active) return nullptr;
 
-
     double bulletX = m_x + m_width / 2.0 - 4;
     double bulletY = m_y + m_height / 2.0 - 4;
 
@@ -72,15 +71,13 @@ void Tank::updateAI(double deltaTime) {
     m_aiDecisionTimer -= deltaTime;
     if (m_aiDecisionTimer <= 0) {
         m_direction = QRandomGenerator::global()->bounded(0, 4);
-
-
-        double randomFactor = QRandomGenerator::global()->generateDouble();
+        double randomFactor = QRandomGenerator::global()->generateDouble(); // 0.0 ~ 1.0
         m_aiDecisionTimer = 1.5 + randomFactor * (3.0 - 1.5);
     }
 
     m_aiFireTimer -= deltaTime;
     if (m_aiFireTimer <= 0) {
-        double randomFactor = QRandomGenerator::global()->generateDouble();
+        double randomFactor = QRandomGenerator::global()->generateDouble(); // 0.0 ~ 1.0
         m_aiFireTimer = 1.0 + randomFactor * (2.5 - 1.0);
     }
 }

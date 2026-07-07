@@ -7,17 +7,15 @@ Window {
     width: 800
     height: 600
     visible: true
-    title: "经典坦克大战 (QML + C++ 实训版)"
-    color: "#1a1a1a" // 暗黑背景，更有游戏质感
+    title: "经典坦克大战"
+    color: "#1a1a1a"
 
-     GameController {
+    GameController {
         id: gameController
-
         onGameOver: {
             gameOverDialog.open()
         }
     }
-
 
     Item {
         id: gameStage
@@ -40,10 +38,10 @@ Window {
             }
         }
 
-         Keys.onReleased: (event) => {
+        Keys.onReleased: (event) => {
             if (event.isAutoRepeat) return;
 
-             if (event.key === Qt.Key_W || event.key === Qt.Key_Up ||
+            if (event.key === Qt.Key_W || event.key === Qt.Key_Up ||
                 event.key === Qt.Key_S || event.key === Qt.Key_Down ||
                 event.key === Qt.Key_A || event.key === Qt.Key_Left ||
                 event.key === Qt.Key_D || event.key === Qt.Key_Right) {
@@ -52,6 +50,35 @@ Window {
             }
         }
 
+        GridView {
+            id: mapGrid
+            anchors.fill: parent
+            cellWidth: 40
+            cellHeight: 40
+            interactive: false
+            model: gameController.mapManager.mapData
+
+            delegate: Item {
+                width: 40
+                height: 40
+
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: 1
+                    visible: modelData > 0
+                    color: modelData === 1 ? "#b22222" : "#708090"
+                    radius: modelData === 2 ? 4 : 0
+
+                    Row {
+                        visible: modelData === 1
+                        anchors.centerIn: parent
+                        spacing: 4
+                        Rectangle { width: 10; height: 38; color: "#8b0000" }
+                        Rectangle { width: 10; height: 38; color: "#8b0000" }
+                    }
+                }
+            }
+        }
 
         Repeater {
             model: gameController.enemies

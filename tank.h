@@ -27,13 +27,13 @@ signals:
     void hpChanged();
 
 private:
+
     void updateAI(double deltaTime);
 
     int m_hp;
     int m_maxHp;
     bool m_isPlayer;
     bool m_isMoving;
-
     double m_aiDecisionTimer;
     double m_aiFireTimer;
 };
