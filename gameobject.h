@@ -17,13 +17,12 @@ public:
     virtual ~GameObject() = default;
 
     virtual void update(double deltaTime) = 0;
-
     virtual QRectF boundingBox() const;
 
-    double x() const { return m_x; }
-    double y() const { return m_y; }
-    int direction() const { return m_direction; }
-    bool isActive() const { return m_active; }
+    double x() const;
+    double y() const;
+    int direction() const;
+    bool isActive() const;
 
     void setX(double x);
     void setY(double y);

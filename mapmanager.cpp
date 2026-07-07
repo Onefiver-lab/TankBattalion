@@ -5,9 +5,9 @@ MapManager::MapManager(QObject *parent) : QObject(parent) {
 }
 
 void MapManager::loadDefaultMap() {
-    int demoMap[ROWS][COLS] = {
+    int singleScreenMap[ROWS][COLS] = {
         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,1,1,0,1,1,0,2,2,0,0,2,2,0,1,1,0,1,1,0},
+        {0,0,0,0,0,0,0,2,2,0,0,2,2,0,0,0,0,0,0,0},
         {0,1,1,0,1,1,0,0,0,0,0,0,0,0,1,1,0,1,1,0},
         {0,1,1,0,1,1,0,1,1,1,1,1,1,0,1,1,0,1,1,0},
         {0,0,0,0,0,0,0,1,2,2,2,2,1,0,0,0,0,0,0,0},
@@ -19,13 +19,13 @@ void MapManager::loadDefaultMap() {
         {0,1,0,1,0,1,1,1,1,0,0,1,1,1,1,0,1,0,1,0},
         {0,1,0,1,0,1,0,0,0,0,0,0,0,0,1,0,1,0,1,0},
         {0,0,0,0,0,1,0,1,1,1,1,1,1,0,1,0,0,0,0,0},
-        {0,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,0,0,0},
+        {0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0},
         {0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0}
     };
 
     for(int r = 0; r < ROWS; ++r) {
         for(int c = 0; c < COLS; ++c) {
-            m_map[r][c] = demoMap[r][c];
+            m_map[r][c] = singleScreenMap[r][c];
         }
     }
     emit mapChanged();
@@ -51,9 +51,7 @@ bool MapManager::checkCollision(const QRectF &box) const {
 
     for (int r = startRow; r <= endRow; ++r) {
         for (int c = startCol; c <= endCol; ++c) {
-            if (getTileType(r, c) != 0) {
-                return true;
-            }
+            if (getTileType(r, c) != 0) return true;
         }
     }
     return false;
