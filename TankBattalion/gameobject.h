@@ -1,6 +1,7 @@
 #pragma once
 #include <QObject>
 #include <QRectF>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 class GameObject : public QObject {
     Q_OBJECT
@@ -43,4 +44,7 @@ protected:
     int m_direction;
     double m_speed;
     bool m_active;
+
+    QML_ELEMENT
+    QML_UNCREATABLE("Cannot instantiate base class in QML")
 };

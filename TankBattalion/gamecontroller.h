@@ -3,6 +3,7 @@
 #include <QTimer>
 #include <QElapsedTimer>
 #include <QList>
+#include <QtQmlIntegration/qqmlintegration.h>
 #include "bullet.h"
 #include "tank.h"
 #include "mapmanager.h"
@@ -20,8 +21,8 @@ class GameController : public QObject {
 
 public:
     enum GameMode { Single = 0, CoOp, PVP };
-    enum Difficulty { Easy = 0, Medium, Hard, Hell };
     Q_ENUM(GameMode)
+    enum Difficulty { Easy = 0, Medium, Hard, Hell };
     Q_ENUM(Difficulty)
 
     explicit GameController(QObject *parent = nullptr);
@@ -72,4 +73,6 @@ private:
 
     int m_gameMode;
     int m_difficulty;
+
+    QML_ELEMENT
 };

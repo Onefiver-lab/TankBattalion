@@ -1,13 +1,8 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
-#include "gamecontroller.h"
-#include "gameobject.h"
 
 int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
-
-    qmlRegisterType<GameController>("com.game.tank", 1, 0, "GameController");
-    qmlRegisterUncreatableType<GameObject>("com.game.tank", 1, 0, "GameObject", "不能在QML中直接实例化基类");
 
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/qt/qml/TankBattalion/Main.qml"));

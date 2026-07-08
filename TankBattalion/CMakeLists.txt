@@ -21,6 +21,15 @@ qt_add_qml_module(appTankBattalion
     SOURCES gamecontroller.h gamecontroller.cpp
     SOURCES tank.h tank.cpp
     SOURCES mapmanager.h mapmanager.cpp
+    SOURCES
+    QML_FILES BattleField.qml
+    QML_FILES
+    QML_FILES TankSprite.qml
+    QML_FILES TileMapView.qml
+    QML_FILES EnemySprite.qml
+    QML_FILES BulletSprite.qml
+    QML_FILES ControlHud.qml
+    QML_FILES EndDialog.qml
 )
 target_compile_features(appTankBattalion PRIVATE cxx_std_23)
 target_link_libraries(appTankBattalion
@@ -35,7 +44,7 @@ install(TARGETS appTankBattalion
 
 # C++ Modules support
 set(TANKBATTALION_MODULE_FILES
-    # math.cppm
+    # math.cppm                             # 模块文件
 )
 source_group("TankBattalion" FILES ${TANKBATTALION_MODULE_FILES})
 target_sources(appTankBattalion
