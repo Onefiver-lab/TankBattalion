@@ -1,54 +1,49 @@
 cmake_minimum_required(VERSION 4.1.1)
 set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
-# cmake_minimum_required(VERSION 4.3.2)
-# set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
 set(CMAKE_CXX_MODULE_STD ON)
 
 project(TankBattalion VERSION 0.1 LANGUAGES CXX)
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2)
 qt_standard_project_setup(REQUIRES 6.11)
 
-qt_add_executable(appTankBattalion  WIN32)
+qt_add_executable(appTankBattalion WIN32)
+
 qt_add_qml_module(appTankBattalion
     URI TankBattalion
     VERSION 1.0
-    SOURCES     main.cpp
-    QML_FILES   Main.qml
-    SOURCES gameobject.h gameobject.cpp
-    SOURCES bullet.h bullet.cpp
-    SOURCES gamecontroller.h gamecontroller.cpp
-    SOURCES tank.h tank.cpp
-    SOURCES mapmanager.h mapmanager.cpp
     SOURCES
-    QML_FILES BattleField.qml
+        main.cpp
+        gameobject.h       gameobject.cpp
+        bullet.h           bullet.cpp
+        gamecontroller.h   gamecontroller.cpp
+        tank.h             tank.cpp
+        mapmanager.h       mapmanager.cpp
+        settingsmanager.h  settingsmanager.cpp
+        savemanager.h      savemanager.cpp
     QML_FILES
-    QML_FILES TankSprite.qml
-    QML_FILES TileMapView.qml
-    QML_FILES EnemySprite.qml
-    QML_FILES BulletSprite.qml
-    QML_FILES ControlHud.qml
-    QML_FILES EndDialog.qml
+        Main.qml
+        BattleField.qml
+        ControlHud.qml
+        PauseOverlay.qml
+        SettingsPanel.qml
+        EndDialog.qml
+        TankSprite.qml
+        TileMapView.qml
+        EnemySprite.qml
+        BulletSprite.qml
 )
+
 target_compile_features(appTankBattalion PRIVATE cxx_std_23)
 target_link_libraries(appTankBattalion
-    PRIVATE Qt6::Quick
+    PRIVATE
+        Qt6::Quick
+        Qt6::QuickControls2
 )
 
 set(CMAKE_INSTALL_PREFIX "/opt/${PROJECT_NAME}" CACHE PATH "Install path prefix" FORCE)
 install(TARGETS appTankBattalion
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-# C++ Modules support
-set(TANKBATTALION_MODULE_FILES
-    # math.cppm                             # 模块文件
-)
-source_group("TankBattalion" FILES ${TANKBATTALION_MODULE_FILES})
-target_sources(appTankBattalion
-    PRIVATE FILE_SET cxx_modules TYPE CXX_MODULES
-        BASE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}
-        FILES  ${TANKBATTALION_MODULE_FILES}
 )

@@ -1,4 +1,5 @@
 #include "gamecontroller.h"
+#include "settingsmanager.h"
 #include <QDebug>
 
 GameController::GameController(QObject *parent)
@@ -18,6 +19,8 @@ GameController::~GameController() {
 void GameController::startGame() {
     m_gameTimer->stop();
     m_elapsedTimer.start();
+    m_score = 0;
+    emit scoreChanged();
 
     qDeleteAll(m_bulletList); m_bulletList.clear();
     qDeleteAll(m_enemyList);  m_enemyList.clear();
@@ -27,6 +30,8 @@ void GameController::startGame() {
     m_mapManager->loadDefaultMap();
     initSessionRules();
 
+    m_paused = false;
+    emit pausedChanged();
     m_gameTimer->start(16);
     emit playersChanged();
     emit enemiesChanged();
@@ -34,7 +39,19 @@ void GameController::startGame() {
 }
 
 void GameController::pauseGame() {
+    if (m_paused) return;
+    if (!m_gameTimer->isActive()) return;
     m_gameTimer->stop();
+    m_paused = true;
+    emit pausedChanged();
+}
+
+void GameController::resumeGame() {
+    if (!m_paused) return;
+    m_elapsedTimer.start();
+    m_gameTimer->start(16);
+    m_paused = false;
+    emit pausedChanged();
 }
 
 void GameController::initSessionRules() {
@@ -44,7 +61,7 @@ void GameController::initSessionRules() {
     if (m_gameMode != PVP) {
         switch (m_difficulty) {
         case Easy:   enemyCount = 3;  ammoConfig = -1;  break;
-        case Medium:  enemyCount = 6;  ammoConfig = -1;  break;
+        case Medium: enemyCount = 6;  ammoConfig = -1;  break;
         case Hard:   enemyCount = 12; ammoConfig = 100; break;
         case Hell:   enemyCount = 20; ammoConfig = 50;  break;
         }
@@ -72,20 +89,17 @@ void GameController::initSessionRules() {
 
 void GameController::spawnEnemies(int count) {
     QList<QPointF> spawnPoints = {
-        QPointF(40,  0),
-        QPointF(240, 0),
-        QPointF(520, 0),
-        QPointF(720, 0)
-    };
-
-    for (int i = 0; i < count; ++i) {
-        QPointF pt = spawnPoints[i % spawnPoints.size()];
-        double offsetX = (i / spawnPoints.size()) * 4.0;
-        m_enemyList.append(new Tank(pt.x() + offsetX, pt.y(), false, 0, this));
-    }
+        QPointF(40,  0), QPointF(240, 0), QPointF(520, 0), QPointF(720, 0)
+};
+for (int i = 0; i < count; ++i) {
+    QPointF pt = spawnPoints[i % spawnPoints.size()];
+    double offsetX = (i / spawnPoints.size()) * 4.0;
+    m_enemyList.append(new Tank(pt.x() + offsetX, pt.y(), false, 0, this));
+}
 }
 
 void GameController::handlePlayerMove(int playerId, int direction, bool moving) {
+    if (m_paused) return;
     Tank *target = (playerId == 1) ? m_player1 : m_player2;
     if (target && target->isActive()) {
         target->setDirection(direction);
@@ -94,6 +108,7 @@ void GameController::handlePlayerMove(int playerId, int direction, bool moving) 
 }
 
 void GameController::handlePlayerFire(int playerId) {
+    if (m_paused) return;
     Tank *target = (playerId == 1) ? m_player1 : m_player2;
     if (target && target->isActive()) {
         Bullet *b = target->fire();
@@ -102,6 +117,8 @@ void GameController::handlePlayerFire(int playerId) {
 }
 
 void GameController::gameLoop() {
+    if (m_paused) return;
+
     double deltaTime = m_elapsedTimer.restart() / 1000.0;
     if (deltaTime > 0.05) deltaTime = 0.05;
 
@@ -111,7 +128,6 @@ void GameController::gameLoop() {
             m_player1->setX(old.x()); m_player1->setY(old.y());
         }
     }
-
     if (m_player2 && m_player2->isActive()) {
         QRectF old = m_player2->boundingBox(); m_player2->update(deltaTime);
         if (m_mapManager->checkCollision(m_player2->boundingBox())) {
@@ -131,12 +147,10 @@ void GameController::gameLoop() {
             }
         }
     }
-
     for (Bullet *bullet : m_bulletList) bullet->update(deltaTime);
 
     checkCollisions();
     cleanUpDestroyedObjects();
-
     emit enemiesChanged();
     emit bulletsChanged();
 }
@@ -144,66 +158,49 @@ void GameController::gameLoop() {
 void GameController::checkCollisions() {
     for (Bullet *bullet : m_bulletList) {
         if (!bullet->isActive()) continue;
-
         if (m_mapManager->handleBulletHit(bullet->boundingBox())) {
             bullet->setActive(false);
             continue;
         }
-
         if (bullet->isFromPlayer()) {
             if (m_gameMode != PVP) {
                 for (Tank *enemy : m_enemyList) {
                     if (enemy->isActive() && bullet->boundingBox().intersects(enemy->boundingBox())) {
                         bullet->setActive(false);
                         enemy->takeDamage(1);
+                        if (!enemy->isActive()) { m_score += 100; emit scoreChanged(); }
                         break;
                     }
                 }
-            }
-            else {
+            } else {
                 if (bullet->shooterId() == 1 && m_player2 && m_player2->isActive()) {
                     if (bullet->boundingBox().intersects(m_player2->boundingBox())) {
                         bullet->setActive(false);
                         m_player2->takeDamage(1);
-                        if (!m_player2->isActive()) {
-                            m_gameTimer->stop();
-                            emit gameOver("玩家 1 斩获胜利！");
-                        }
+                        if (!m_player2->isActive()) { m_gameTimer->stop(); emit gameOver("玩家 1 斩获胜利！"); }
                     }
-                }
-                else if (bullet->shooterId() == 2 && m_player1 && m_player1->isActive()) {
+                } else if (bullet->shooterId() == 2 && m_player1 && m_player1->isActive()) {
                     if (bullet->boundingBox().intersects(m_player1->boundingBox())) {
                         bullet->setActive(false);
                         m_player1->takeDamage(1);
-                        if (!m_player1->isActive()) {
-                            m_gameTimer->stop();
-                            emit gameOver("玩家 2 斩获胜利！");
-                        }
+                        if (!m_player1->isActive()) { m_gameTimer->stop(); emit gameOver("玩家 2 斩获胜利！"); }
                     }
                 }
             }
-        }
-        else {
+        } else {
             if (m_player1 && m_player1->isActive() && bullet->boundingBox().intersects(m_player1->boundingBox())) {
-                bullet->setActive(false);
-                m_player1->takeDamage(1);
+                bullet->setActive(false); m_player1->takeDamage(1);
             }
             if (m_player2 && m_player2->isActive() && bullet->boundingBox().intersects(m_player2->boundingBox())) {
-                bullet->setActive(false);
-                m_player2->takeDamage(1);
+                bullet->setActive(false); m_player2->takeDamage(1);
             }
-
             if (m_gameMode == Single && m_player1 && !m_player1->isActive()) {
                 m_gameTimer->stop();
                 emit gameOver("全军覆没，游戏失败！");
-            }
-            else if (m_gameMode == CoOp) {
+            } else if (m_gameMode == CoOp) {
                 bool p1Dead = !m_player1 || !m_player1->isActive();
                 bool p2Dead = !m_player2 || !m_player2->isActive();
-                if (p1Dead && p2Dead) {
-                    m_gameTimer->stop();
-                    emit gameOver("两位玩家均已阵亡，游戏失败！");
-                }
+                if (p1Dead && p2Dead) { m_gameTimer->stop(); emit gameOver("两位玩家均已阵亡，游戏失败！"); }
             }
         }
     }
@@ -232,4 +229,130 @@ QList<QObject*> GameController::bullets() const {
 }
 QList<QObject*> GameController::enemies() const {
     QList<QObject*> list; for (auto e : m_enemyList) list.append(e); return list;
+}
+
+QVariantMap GameController::captureSnapshot() const {
+    QVariantMap snap;
+    snap["gameMode"]   = m_gameMode;
+    snap["difficulty"] = m_difficulty;
+    snap["score"]      = m_score;
+
+    QVariantList map;
+    for (int r = 0; r < MapManager::ROWS; ++r)
+        for (int c = 0; c < MapManager::COLS; ++c)
+            map.append(m_mapManager->getTileType(r, c));
+    snap["map"] = map;
+
+    auto tankToMap = [](const Tank *t) -> QVariantMap {
+        QVariantMap m;
+        if (!t) return m;
+        m["x"] = t->x(); m["y"] = t->y();
+        m["dir"] = t->direction();
+        m["hp"] = t->hp();
+        m["ammo"] = t->ammo();
+        m["active"] = t->isActive();
+        return m;
+    };
+    snap["p1"] = tankToMap(m_player1);
+    snap["p2"] = tankToMap(m_player2);
+
+    QVariantList enemies;
+    for (Tank *e : m_enemyList) {
+        QVariantMap m = tankToMap(e);
+        m["active"] = e->isActive();
+        enemies.append(m);
+    }
+    snap["enemies"] = enemies;
+
+    QVariantList bullets;
+    for (Bullet *b : m_bulletList) {
+        QVariantMap m;
+        m["x"] = b->x(); m["y"] = b->y();
+        m["dir"] = b->direction();
+        m["fromPlayer"] = b->isFromPlayer();
+        m["shooterId"] = b->shooterId();
+        bullets.append(m);
+    }
+    snap["bullets"] = bullets;
+
+    QString modeName = (m_gameMode == Single) ? QStringLiteral("单人")
+                       : (m_gameMode == CoOp)   ? QStringLiteral("双人")
+                                              :                          QStringLiteral("PVP");
+    QString diffName = (m_difficulty == Easy)   ? QStringLiteral("简单")
+                       : (m_difficulty == Medium) ? QStringLiteral("中等")
+                       : (m_difficulty == Hard)   ? QStringLiteral("困难")
+                                                  :                            QStringLiteral("地狱");
+    snap["summary"] = QStringLiteral("%1 · %2 · %3 分 · 剩余 %4 敌")
+                          .arg(modeName, diffName).arg(m_score).arg(m_enemyList.size());
+    return snap;
+}
+
+bool GameController::restoreSnapshot(const QVariantMap &snap) {
+    if (snap.isEmpty()) return false;
+    m_gameTimer->stop();
+
+    m_gameMode   = snap.value("gameMode", Single).toInt();
+    m_difficulty = snap.value("difficulty", Easy).toInt();
+    m_score      = snap.value("score", 0).toInt();
+    emit gameModeChanged();
+    emit difficultyChanged();
+    emit scoreChanged();
+
+    qDeleteAll(m_bulletList); m_bulletList.clear();
+    qDeleteAll(m_enemyList);  m_enemyList.clear();
+    if (m_player1) { m_player1->deleteLater(); m_player1 = nullptr; }
+    if (m_player2) { m_player2->deleteLater(); m_player2 = nullptr; }
+
+    const QVariantList map = snap.value("map").toList();
+    for (int r = 0; r < MapManager::ROWS && r * MapManager::COLS < map.size(); ++r) {
+        for (int c = 0; c < MapManager::COLS; ++c) {
+            int idx = r * MapManager::COLS + c;
+            if (idx < map.size()) m_mapManager->setTileType(r, c, map.at(idx).toInt());
+        }
+    }
+
+    auto spawnTankFromMap = [&](const QVariantMap &m, bool isPlayer, int pid) -> Tank* {
+        if (m.isEmpty()) return nullptr;
+        Tank *t = new Tank(m.value("x", 0).toDouble(), m.value("y", 0).toDouble(),
+                           isPlayer, pid, this);
+        t->setDirection(m.value("dir", 0).toInt());
+        t->setAmmo(m.value("ammo", -1).toInt());
+        int hp = m.value("hp", 1).toInt();
+        int dmg = t->maxHp() - hp;
+        for (int i = 0; i < dmg && t->isActive(); ++i) t->takeDamage(1);
+        if (!m.value("active", true).toBool()) t->setActive(false);
+        return t;
+    };
+
+    m_player1 = spawnTankFromMap(snap.value("p1").toMap(), true, 1);
+    m_player2 = spawnTankFromMap(snap.value("p2").toMap(), true, 2);
+
+    const QVariantList enemies = snap.value("enemies").toList();
+    for (const QVariant &v : enemies) {
+        Tank *t = spawnTankFromMap(v.toMap(), false, 0);
+        if (t) m_enemyList.append(t);
+    }
+    const QVariantList bullets = snap.value("bullets").toList();
+    for (const QVariant &v : bullets) {
+        QVariantMap m = v.toMap();
+        Bullet *b = new Bullet(m.value("x", 0).toDouble(), m.value("y", 0).toDouble(),
+                               m.value("dir", 0).toInt(),
+                               m.value("fromPlayer", false).toBool(),
+                               m.value("shooterId", 0).toInt(), this);
+        m_bulletList.append(b);
+    }
+
+    m_paused = false;
+    emit pausedChanged();
+    emit playersChanged();
+    emit enemiesChanged();
+    emit bulletsChanged();
+    m_elapsedTimer.start();
+    m_gameTimer->start(16);
+    return true;
+}
+
+void GameController::reportFinalScore() {
+    if (!m_settings) return;
+    m_settings->reportScore(m_gameMode, m_difficulty, m_score);
 }

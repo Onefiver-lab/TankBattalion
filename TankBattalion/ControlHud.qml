@@ -4,37 +4,88 @@ import QtQuick.Controls
 Rectangle {
     id: root
     property var gameController
+    property var saveManager
     property var focusTarget
 
     width: parent.width
-    height: 50
+    height: 60
     color: "#222"
 
     Row {
-        anchors.centerIn: parent
-        spacing: 12
+        anchors.fill: parent
+        anchors.margins: 6
+        spacing: 8
 
-        ComboBox {
-            id: modeBox
-            model: ["\u5355\u4eba\u6a21\u5f0f", "\u53cc\u4eba\u540c\u5c4f", "PVP\u5bf9\u6218"]
-            currentIndex: root.gameController.gameMode
-            onCurrentIndexChanged: root.gameController.gameMode = currentIndex
+        Column {
+            spacing: 4
+            anchors.verticalCenter: parent.verticalCenter
+            Row {
+                spacing: 6
+                ComboBox {
+                    id: modeBox
+                    model: ["单人模式", "双人同屏", "PVP对战"]
+                    currentIndex: root.gameController ? root.gameController.gameMode : 0
+                    onCurrentIndexChanged: if (root.gameController) root.gameController.gameMode = currentIndex
+                }
+                ComboBox {
+                    id: diffBox
+                    model: ["简单 (3敌人/无限弹)", "中等 (6敌人/无限弹)", "困难 (12敌人/100弹)", "地狱 (20敌人/50弹)"]
+                    visible: modeBox.currentIndex !== 2
+                    currentIndex: root.gameController ? root.gameController.difficulty : 0
+                    onCurrentIndexChanged: if (root.gameController) root.gameController.difficulty = currentIndex
+                }
+            }
+            Text {
+                visible: modeBox.currentIndex !== 2
+                color: "#9e9e9e"
+                font.pixelSize: 11
+                text: "当前分数：" + (root.gameController ? root.gameController.currentScore : 0)
+            }
         }
 
-        ComboBox {
-            id: diffBox
-            model: ["\u7b80\u5355 (3\u654c\u4eba/\u65e0\u9650\u5f39)", "\u4e2d\u7b49 (6\u654c\u4eba/\u65e0\u9650\u5f39)", "\u56f0\u96be (12\u654c\u4eba/100\u5f39)", "\u5730\u72f1 (20\u654c\u4eba/50\u5f39)"]
-            visible: modeBox.currentIndex !== 2
-            currentIndex: root.gameController.difficulty
-            onCurrentIndexChanged: root.gameController.difficulty = currentIndex
-        }
+        Item { width: 1 }
 
-        Button {
-            text: "\u91cd\u6574\u6218\u5c40\u5e76\u542f\u52a8"
-            onClicked: {
-                root.gameController.startGame()
-                if (root.focusTarget) root.focusTarget.focus = true
+        Row {
+            spacing: 6
+            anchors.verticalCenter: parent.verticalCenter
+
+            Button {
+                text: "重新开始"
+                onClicked: {
+                    if (root.gameController) {
+                        if (root.gameController.paused) root.gameController.resumeGame()
+                        root.gameController.startGame()
+                    }
+                    if (root.focusTarget) root.focusTarget.focus = true
+                }
+            }
+            Button {
+                text: "继续上局"
+                enabled: root.saveManager && root.saveManager.hasSave
+                onClicked: {
+                    if (!root.saveManager) return
+                    const snap = root.saveManager.readSnapshot()
+                    if (snap && root.gameController) {
+                        root.gameController.restoreSnapshot(snap)
+                        if (root.focusTarget) root.focusTarget.focus = true
+                    }
+                }
+            }
+            Button {
+                text: root.gameController && root.gameController.paused ? "继续游戏" : "暂停"
+                onClicked: {
+                    if (!root.gameController) return
+                    if (root.gameController.paused) root.gameController.resumeGame()
+                    else root.gameController.pauseGame()
+                    if (root.focusTarget) root.focusTarget.focus = true
+                }
+            }
+            Button {
+                text: "设置"
+                onClicked: root.settingsRequested()
             }
         }
     }
+
+    signal settingsRequested()
 }

@@ -3,6 +3,7 @@
 #include <QTimer>
 #include <QElapsedTimer>
 #include <QList>
+#include <QVariantMap>
 #include <QtQmlIntegration/qqmlintegration.h>
 #include "bullet.h"
 #include "tank.h"
@@ -18,6 +19,8 @@ class GameController : public QObject {
 
     Q_PROPERTY(int gameMode READ gameMode WRITE setGameMode NOTIFY gameModeChanged)
     Q_PROPERTY(int difficulty READ difficulty WRITE setDifficulty NOTIFY difficultyChanged)
+    Q_PROPERTY(bool paused READ paused NOTIFY pausedChanged)
+    Q_PROPERTY(int currentScore READ currentScore NOTIFY scoreChanged)
 
 public:
     enum GameMode { Single = 0, CoOp, PVP };
@@ -30,8 +33,18 @@ public:
 
     Q_INVOKABLE void startGame();
     Q_INVOKABLE void pauseGame();
+    Q_INVOKABLE void resumeGame();
     Q_INVOKABLE void handlePlayerMove(int playerId, int direction, bool moving);
     Q_INVOKABLE void handlePlayerFire(int playerId);
+
+    bool paused() const { return m_paused; }
+
+    Q_INVOKABLE QVariantMap captureSnapshot() const;
+    Q_INVOKABLE bool        restoreSnapshot(const QVariantMap &snap);
+
+    int currentScore() const { return m_score; }
+
+    Q_INVOKABLE void reportFinalScore();
 
     QList<QObject*> bullets() const;
     QList<QObject*> enemies() const;
@@ -45,6 +58,8 @@ public:
     int difficulty() const { return m_difficulty; }
     void setDifficulty(int diff) { if(m_difficulty != diff) { m_difficulty = diff; emit difficultyChanged(); } }
 
+    void setSettingsManager(class SettingsManager *s) { m_settings = s; }
+
 signals:
     void gameOver(QString message);
     void bulletsChanged();
@@ -52,6 +67,8 @@ signals:
     void playersChanged();
     void gameModeChanged();
     void difficultyChanged();
+    void pausedChanged();
+    void scoreChanged();
 
 private slots:
     void gameLoop();
@@ -70,9 +87,12 @@ private:
     Tank *m_player1;
     Tank *m_player2;
     MapManager *m_mapManager;
+    SettingsManager *m_settings = nullptr;
 
     int m_gameMode;
     int m_difficulty;
+    bool m_paused = false;
+    int  m_score = 0;
 
     QML_ELEMENT
 };
