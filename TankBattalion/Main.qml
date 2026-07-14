@@ -37,9 +37,34 @@ Window {
         else { root.showNormal(); root.width = 800; root.height = 650; }
     }
 
-    Item {
-        id: contentRoot
+    function startGame(mode, difficulty) {
+        gameController.gameMode = mode
+        gameController.difficulty = difficulty
+        gameController.startGame()
+        menuView.visible = false
+        gameView.visible = true
+        battleField.focus = true
+    }
+
+    function backToMenu() {
+        endDialog.close()
+        pauseOverlay.visible = false
+        gameView.visible = false
+        menuView.visible = true
+    }
+
+    StartMenu {
+        id: menuView
         anchors.fill: parent
+        visible: true
+        onStartGame: (mode, difficulty) => root.startGame(mode, difficulty)
+        onOpenSettings: settingsPanel.open()
+    }
+
+    Item {
+        id: gameView
+        anchors.fill: parent
+        visible: false
 
         BattleField {
             id: battleField
@@ -79,6 +104,7 @@ Window {
             gameController.startGame()
             battleField.focus = true
         }
+        onBackToMenuRequested: root.backToMenu()
     }
 
     SettingsPanel {

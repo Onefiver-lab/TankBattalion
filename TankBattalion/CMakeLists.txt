@@ -35,6 +35,7 @@ qt_add_qml_module(appTankBattalion
         BulletSprite.qml
         SOURCES
         QML_FILES ParticleEffect.qml
+        QML_FILES StartMenu.qml
 )
 
 target_compile_features(appTankBattalion PRIVATE cxx_std_23)

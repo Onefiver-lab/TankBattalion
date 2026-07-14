@@ -8,6 +8,7 @@
 #include "bullet.h"
 #include "tank.h"
 #include "mapmanager.h"
+#include "settingsmanager.h"
 
 class GameController : public QObject {
     Q_OBJECT
@@ -58,7 +59,7 @@ public:
     int difficulty() const { return m_difficulty; }
     void setDifficulty(int diff) { if(m_difficulty != diff) { m_difficulty = diff; emit difficultyChanged(); } }
 
-    void setSettingsManager(class SettingsManager *s) { m_settings = s; }
+    Q_INVOKABLE void setSettingsManager(class SettingsManager *s) { m_settings = s; }
 
 signals:
     void gameOver(QString message);

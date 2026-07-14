@@ -16,6 +16,30 @@ Dialog {
         radius: 8
     }
 
+    header: Rectangle {
+        color: "#2a2a2a"
+        height: 44
+        radius: 8
+
+        Text {
+            text: root.title
+            color: "#fff"
+            font.pixelSize: 16
+            font.bold: true
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.leftMargin: 16
+        }
+
+        Rectangle {
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 1
+            color: "#444"
+        }
+    }
+
     contentItem: Column {
         id: contentCol
         width: root.width - 32
@@ -34,6 +58,27 @@ Dialog {
         Row {
             anchors.right: parent.right
             spacing: 8
+
+            Button {
+                id: menuBtn
+                text: "返回菜单"
+                height: 34
+                width: 96
+                onClicked: root.backToMenuRequested()
+
+                background: Rectangle {
+                    color: menuBtn.pressed ? "#3a3a3a" : (menuBtn.hovered ? "#2a2a2a" : "#1e1e1e")
+                    border.color: "#444"
+                    radius: 4
+                }
+                contentItem: Text {
+                    text: menuBtn.text
+                    color: "#ccc"
+                    font.pixelSize: 12
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
 
             Button {
                 id: restartBtn
@@ -82,4 +127,5 @@ Dialog {
     }
 
     signal restartRequested()
+    signal backToMenuRequested()
 }

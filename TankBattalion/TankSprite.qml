@@ -168,7 +168,7 @@ Item {
 
     // Label + Ammo
     Text {
-        text: root.label + (root.tank && root.tank.ammo === -1 ? "" : ":" + root.tank.ammo)
+        text: root.tank ? (root.label + (root.tank.ammo === -1 ? "" : ":" + root.tank.ammo)) : root.label
         color: root.textColor
         font.pixelSize: 10
         font.bold: true
