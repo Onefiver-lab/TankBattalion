@@ -42,6 +42,44 @@ Item {
             tank: root.gameController.player2; label: "P2"
             bodyColor: "#a2d2ff"; cannonColor: "#7209b7"; textColor: "#000"
         }
+
+        // Particle system container
+        Item {
+            id: particleContainer
+            anchors.fill: parent
+        }
+    }
+
+    Connections {
+        target: root.gameController
+        function onExplosionRequested(x, y, isBig) {
+            var effect = Qt.createQmlObject(
+                'import QtQuick; ParticleEffect { }',
+                particleContainer,
+                'dynamicParticle'
+            );
+            effect.originX = x;
+            effect.originY = y;
+            effect.primaryColor = isBig ? "#ff6600" : "#ffcc00";
+            effect.secondaryColor = isBig ? "#ff0000" : "#ff8800";
+            effect.particleCount = isBig ? 16 : 8;
+            effect.particleLife = isBig ? 700 : 400;
+            effect.size = isBig ? 50 : 25;
+            effect.explode();
+
+            // Auto-cleanup after animation completes
+            var cleanupTimer = Qt.createQmlObject(
+                'import QtQuick; Timer { }',
+                effect,
+                'dynamicTimer'
+            );
+            cleanupTimer.interval = effect.particleLife + 100;
+            cleanupTimer.repeat = false;
+            cleanupTimer.triggered.connect(function() {
+                effect.destroy();
+            });
+            cleanupTimer.start();
+        }
     }
 
     function pressKey(event) {

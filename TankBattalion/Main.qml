@@ -74,6 +74,11 @@ Window {
 
     EndDialog {
         id: endDialog
+        onRestartRequested: {
+            endDialog.close()
+            gameController.startGame()
+            battleField.focus = true
+        }
     }
 
     SettingsPanel {

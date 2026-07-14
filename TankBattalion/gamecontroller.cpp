@@ -160,6 +160,8 @@ void GameController::checkCollisions() {
         if (!bullet->isActive()) continue;
         if (m_mapManager->handleBulletHit(bullet->boundingBox())) {
             bullet->setActive(false);
+            emit explosionRequested(bullet->x() + bullet->boundingBox().width()/2,
+                                    bullet->y() + bullet->boundingBox().height()/2, false);
             continue;
         }
         if (bullet->isFromPlayer()) {
@@ -168,7 +170,11 @@ void GameController::checkCollisions() {
                     if (enemy->isActive() && bullet->boundingBox().intersects(enemy->boundingBox())) {
                         bullet->setActive(false);
                         enemy->takeDamage(1);
-                        if (!enemy->isActive()) { m_score += 100; emit scoreChanged(); }
+                        if (!enemy->isActive()) {
+                            m_score += 100; emit scoreChanged();
+                            emit explosionRequested(enemy->x() + enemy->boundingBox().width()/2,
+                                                    enemy->y() + enemy->boundingBox().height()/2, true);
+                        }
                         break;
                     }
                 }
@@ -177,12 +183,16 @@ void GameController::checkCollisions() {
                     if (bullet->boundingBox().intersects(m_player2->boundingBox())) {
                         bullet->setActive(false);
                         m_player2->takeDamage(1);
+                        emit explosionRequested(m_player2->x() + m_player2->boundingBox().width()/2,
+                                                m_player2->y() + m_player2->boundingBox().height()/2, true);
                         if (!m_player2->isActive()) { m_gameTimer->stop(); emit gameOver("玩家 1 斩获胜利！"); }
                     }
                 } else if (bullet->shooterId() == 2 && m_player1 && m_player1->isActive()) {
                     if (bullet->boundingBox().intersects(m_player1->boundingBox())) {
                         bullet->setActive(false);
                         m_player1->takeDamage(1);
+                        emit explosionRequested(m_player1->x() + m_player1->boundingBox().width()/2,
+                                                m_player1->y() + m_player1->boundingBox().height()/2, true);
                         if (!m_player1->isActive()) { m_gameTimer->stop(); emit gameOver("玩家 2 斩获胜利！"); }
                     }
                 }
@@ -190,9 +200,13 @@ void GameController::checkCollisions() {
         } else {
             if (m_player1 && m_player1->isActive() && bullet->boundingBox().intersects(m_player1->boundingBox())) {
                 bullet->setActive(false); m_player1->takeDamage(1);
+                emit explosionRequested(m_player1->x() + m_player1->boundingBox().width()/2,
+                                        m_player1->y() + m_player1->boundingBox().height()/2, true);
             }
             if (m_player2 && m_player2->isActive() && bullet->boundingBox().intersects(m_player2->boundingBox())) {
                 bullet->setActive(false); m_player2->takeDamage(1);
+                emit explosionRequested(m_player2->x() + m_player2->boundingBox().width()/2,
+                                        m_player2->y() + m_player2->boundingBox().height()/2, true);
             }
             if (m_gameMode == Single && m_player1 && !m_player1->isActive()) {
                 m_gameTimer->stop();

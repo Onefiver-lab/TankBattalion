@@ -33,6 +33,8 @@ qt_add_qml_module(appTankBattalion
         TileMapView.qml
         EnemySprite.qml
         BulletSprite.qml
+        SOURCES
+        QML_FILES ParticleEffect.qml
 )
 
 target_compile_features(appTankBattalion PRIVATE cxx_std_23)

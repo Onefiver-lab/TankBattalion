@@ -9,7 +9,19 @@ Rectangle {
 
     width: parent.width
     height: 60
-    color: "#222"
+    color: "#1a1a1a"
+    border.color: "#333"
+    border.width: 1
+
+    // Top accent line
+    Rectangle {
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 2
+        color: "#2a9d8f"
+        opacity: 0.6
+    }
 
     Row {
         anchors.fill: parent
@@ -26,6 +38,19 @@ Rectangle {
                     model: ["单人模式", "双人同屏", "PVP对战"]
                     currentIndex: root.gameController ? root.gameController.gameMode : 0
                     onCurrentIndexChanged: if (root.gameController) root.gameController.gameMode = currentIndex
+
+                    background: Rectangle {
+                        color: "#2a2a2a"
+                        border.color: "#444"
+                        radius: 4
+                    }
+                    contentItem: Text {
+                        text: modeBox.displayText
+                        color: "#eee"
+                        font.pixelSize: 13
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: 8
+                    }
                 }
                 ComboBox {
                     id: diffBox
@@ -33,6 +58,19 @@ Rectangle {
                     visible: modeBox.currentIndex !== 2
                     currentIndex: root.gameController ? root.gameController.difficulty : 0
                     onCurrentIndexChanged: if (root.gameController) root.gameController.difficulty = currentIndex
+
+                    background: Rectangle {
+                        color: "#2a2a2a"
+                        border.color: "#444"
+                        radius: 4
+                    }
+                    contentItem: Text {
+                        text: diffBox.displayText
+                        color: "#eee"
+                        font.pixelSize: 13
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: 8
+                    }
                 }
             }
             Text {
@@ -58,6 +96,20 @@ Rectangle {
                     }
                     if (root.focusTarget) root.focusTarget.focus = true
                 }
+
+                background: Rectangle {
+                    color: parent.pressed ? "#2a9d8f" : (parent.hovered ? "#3a5a50" : "#2a2a2a")
+                    border.color: "#444"
+                    radius: 4
+                    Behavior on color { ColorAnimation { duration: 100 } }
+                }
+                contentItem: Text {
+                    text: parent.text
+                    color: "#eee"
+                    font.pixelSize: 12
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
             }
             Button {
                 text: "继续上局"
@@ -70,6 +122,20 @@ Rectangle {
                         if (root.focusTarget) root.focusTarget.focus = true
                     }
                 }
+
+                background: Rectangle {
+                    color: !parent.enabled ? "#1a1a1a" : (parent.pressed ? "#2a9d8f" : (parent.hovered ? "#3a5a50" : "#2a2a2a"))
+                    border.color: parent.enabled ? "#444" : "#333"
+                    radius: 4
+                    Behavior on color { ColorAnimation { duration: 100 } }
+                }
+                contentItem: Text {
+                    text: parent.text
+                    color: parent.enabled ? "#eee" : "#666"
+                    font.pixelSize: 12
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
             }
             Button {
                 text: root.gameController && root.gameController.paused ? "继续游戏" : "暂停"
@@ -79,10 +145,38 @@ Rectangle {
                     else root.gameController.pauseGame()
                     if (root.focusTarget) root.focusTarget.focus = true
                 }
+
+                background: Rectangle {
+                    color: parent.pressed ? "#e63946" : (parent.hovered ? "#5a3030" : "#2a2a2a")
+                    border.color: "#444"
+                    radius: 4
+                    Behavior on color { ColorAnimation { duration: 100 } }
+                }
+                contentItem: Text {
+                    text: parent.text
+                    color: "#eee"
+                    font.pixelSize: 12
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
             }
             Button {
                 text: "设置"
                 onClicked: root.settingsRequested()
+
+                background: Rectangle {
+                    color: parent.pressed ? "#2a9d8f" : (parent.hovered ? "#3a5a50" : "#2a2a2a")
+                    border.color: "#444"
+                    radius: 4
+                    Behavior on color { ColorAnimation { duration: 100 } }
+                }
+                contentItem: Text {
+                    text: parent.text
+                    color: "#eee"
+                    font.pixelSize: 12
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
             }
         }
     }

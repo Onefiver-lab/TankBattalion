@@ -69,6 +69,7 @@ signals:
     void difficultyChanged();
     void pausedChanged();
     void scoreChanged();
+    void explosionRequested(double x, double y, bool isBig);
 
 private slots:
     void gameLoop();
