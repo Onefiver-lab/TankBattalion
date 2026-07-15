@@ -12,11 +12,8 @@ Rectangle {
     anchors.fill: parent
     z: 50
 
-    MouseArea {
-        anchors.fill: parent
-        hoverEnabled: true
-        acceptedButtons: Qt.AllButtons
-        onWheel: (w) => w.accepted = true
+    TapHandler {
+        onTapped: {}
     }
 
     Column {

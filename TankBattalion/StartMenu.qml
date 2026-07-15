@@ -30,7 +30,6 @@ Item {
                 font.bold: true
                 color: "#2a9d8f"
                 anchors.horizontalCenter: parent.horizontalCenter
-                font.family: "Microsoft YaHei, SimHei, sans-serif"
             }
 
             Text {
@@ -66,6 +65,7 @@ Item {
                     model: ["单人模式", "双人合作", "PVP 对战"]
 
                     Rectangle {
+                        id: modeBtn
                         width: (modeRow.width - 16) / 3
                         height: 40
                         radius: 4
@@ -80,10 +80,8 @@ Item {
                             anchors.centerIn: parent
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: root.selectedMode = index
-                            cursorShape: Qt.PointingHandCursor
+                        TapHandler {
+                            onTapped: root.selectedMode = index
                         }
                     }
                 }
@@ -109,6 +107,7 @@ Item {
                     model: ["简单", "中等", "困难", "地狱"]
 
                     Rectangle {
+                        id: diffBtn
                         width: (diffRow.width - 24) / 4
                         height: 36
                         radius: 4
@@ -123,10 +122,8 @@ Item {
                             anchors.centerIn: parent
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: root.selectedDifficulty = index
-                            cursorShape: Qt.PointingHandCursor
+                        TapHandler {
+                            onTapped: root.selectedDifficulty = index
                         }
                     }
                 }
@@ -144,6 +141,7 @@ Item {
             spacing: 12
 
             Rectangle {
+                id: startBtnBg
                 width: parent.width
                 height: 48
                 radius: 6
@@ -157,16 +155,14 @@ Item {
                     anchors.centerIn: parent
                 }
 
-                MouseArea {
+                TapHandler {
                     id: startBtn
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.startGame(root.selectedMode, root.selectedDifficulty)
+                    onTapped: root.startGame(root.selectedMode, root.selectedDifficulty)
                 }
             }
 
             Rectangle {
+                id: settingsBtnBg
                 width: parent.width
                 height: 40
                 radius: 6
@@ -181,57 +177,21 @@ Item {
                     anchors.centerIn: parent
                 }
 
-                MouseArea {
+                TapHandler {
                     id: settingsBtn
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.openSettings()
+                    onTapped: root.openSettings()
                 }
             }
         }
 
         Text {
-            text: "P1: WASD 移动 · 空格射击　　P2: 方向键 · 回车射击"
+            text: "P1: WASD 移动 · 空格射击    P2: 方向键 · 回车射击"
             color: "#555"
             font.pixelSize: 11
             anchors.horizontalCenter: parent.horizontalCenter
-            wrapMode: Text.WordWrap
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
         }
-    }
-
-    Rectangle {
-        id: tankDeco1
-        width: 24
-        height: 24
-        color: "#2a9d8f"
-        opacity: 0.3
-        rotation: 45
-        x: 40
-        y: 60
-    }
-
-    Rectangle {
-        id: tankDeco2
-        width: 16
-        height: 16
-        color: "#e76f51"
-        opacity: 0.3
-        rotation: 45
-        x: parent.width - 60
-        y: 100
-    }
-
-    Rectangle {
-        id: tankDeco3
-        width: 20
-        height: 20
-        color: "#e9c46a"
-        opacity: 0.2
-        rotation: 45
-        x: 80
-        y: parent.height - 80
     }
 }
